@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>School Language Go/No-Go Research v1</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--text:#172033;--muted:#667085;--border:#d8dee8;--accent:#2457d6;--accentbg:#edf3ff;--good:#18733d;--bad:#b42318;--soft:#f8fafc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif}
+main{max-width:940px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:27px;margin:0}.subtitle{color:var(--muted);margin:6px 0 0}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+label{font-size:14px;font-weight:800}input{width:100%;margin-top:7px;padding:12px;border:1px solid var(--border);border-radius:12px;font-size:16px;background:#fff}
+button{min-height:46px;border:1px solid var(--border);border-radius:13px;background:#fff;color:var(--text);font-size:16px;font-weight:900;padding:11px 18px;cursor:pointer}
+button.primary{background:var(--accentbg);border-color:var(--accent)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.rules{margin-top:18px;background:var(--soft);border-radius:14px;padding:16px;line-height:1.85}
+.notice{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6}
+.hidden{display:none!important}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:14px;text-align:center;padding:11px 7px}
+.stat strong{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}
+.stage{text-align:center}
+.phase{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:900;margin-bottom:12px}
+.smalllabel{font-size:14px;font-weight:900;color:var(--muted);margin-bottom:8px}
+.situation{min-height:120px;display:flex;align-items:center;justify-content:center;background:#f0f2f5;border-radius:18px;padding:22px;font-size:30px;line-height:1.35;font-weight:900}
+.arrow{font-size:27px;margin:14px}
+.response{min-height:132px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:18px;padding:22px;font-size:34px;line-height:1.35;font-weight:900}
+.feedback{min-height:36px;margin-top:10px;font-size:20px;font-weight:900}
+.tap{font-size:29px;min-width:230px;padding:16px 50px;border:2px solid var(--accent);background:var(--accentbg)}
+.hint{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.resultgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.resultgrid .stat strong{font-size:25px}
+.practiceBox{text-align:center}.practiceBox h2{margin-top:0}.practiceBox p{line-height:1.7}
+.ready{font-size:24px;font-weight:900;margin:15px 0}
+.footerNote{font-size:12px;color:var(--muted);margin-top:16px}
+@media(max-width:700px){main{padding:13px}.grid3{grid-template-columns:1fr}.hud{grid-template-columns:repeat(2,1fr)}.resultgrid{grid-template-columns:repeat(2,1fr)}h1{font-size:23px}.situation{font-size:25px}.response{font-size:28px}.tap{width:100%}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>🫀 校園語言 Go / No-Go</h1><p class="subtitle">研究施測版 v1｜反應抑制 × 校園語言情境</p></div>
+<button id="resetBtn">回到首頁</button>
+</header>
+
+<section id="setup" class="panel">
+<div class="grid3">
+<label>學生研究代碼<input id="student" maxlength="20" placeholder="例如 S001" autocomplete="off"></label>
+<label>施測週次<input id="week" type="number" min="1" max="20" value="1"></label>
+<label>施測者代碼<input id="tester" maxlength="20" value="T01" autocomplete="off"></label>
+</div>
+<div class="rules">
+<b>作答規則</b><br>
+每題會先出現一個校園情境，接著出現可能的反應。<br>
+<b>適當、冷靜、尊重的反應 → 按「拍！」</b><br>
+<b>髒話、侮辱、衝動或攻擊性的反應 → 忍住，不要按。</b><br>
+正式測驗共20題；開始前先進行4題練習。
+</div>
+<p class="notice">研究資料以研究代碼記錄，不需輸入學生姓名。本版本將正式測驗條件固定為：情境呈現 1300 ms、反應窗口 3000 ms。</p>
+<button id="practiceBtn" class="primary">先做4題練習</button>
+</section>
+
+<section id="practiceIntro" class="panel practiceBox hidden">
+<h2>練習模式</h2>
+<p>接下來有4題練習題。練習結果<b>不會列入正式研究資料</b>。<br>熟悉「該拍就拍、不該拍就忍住」即可。</p>
+<div class="ready">準備好了嗎？</div>
+<button id="practiceStartBtn" class="primary">開始練習</button>
+</section>
+
+<section id="between" class="panel practiceBox hidden">
+<h2>練習完成</h2>
+<p id="practiceSummary"></p>
+<p>正式測驗開始後，請專心依規則作答。正式測驗共20題。</p>
+<button id="formalStartBtn" class="primary">開始正式測驗</button>
+</section>
+
+<section id="game" class="hidden">
+<div class="hud">
+<div class="stat"><strong id="phaseText">練習</strong><span>模式</span></div>
+<div class="stat"><strong id="progress">1/4</strong><span>進度</span></div>
+<div class="stat"><strong id="correct">0</strong><span>正確</span></div>
+<div class="stat"><strong id="falseAlarm">0</strong><span>誤拍</span></div>
+<div class="stat"><strong id="avgRt">—</strong><span>平均 RT</span></div>
+</div>
+<div class="panel stage">
+<div id="phaseBadge" class="phase">練習題</div>
+<div class="smalllabel">① 情境</div>
+<div id="situation" class="situation"></div>
+<div class="arrow">↓</div>
+<div class="smalllabel">② 反應</div>
+<div id="response" class="response"></div>
+<div id="feedback" class="feedback"></div>
+<button id="tapBtn" class="tap" disabled>🖐️ 拍！</button>
+<p class="hint">反應文字出現後才開始計時；若是不適當反應，請不要按。</p>
+</div>
+</section>
+
+<section id="results" class="panel hidden">
+<h2>正式測驗完成</h2>
+<div class="resultgrid">
+<div class="stat"><strong id="resAcc">0%</strong><span>總正確率</span></div>
+<div class="stat"><strong id="resHit">0%</strong><span>Hit Rate</span></div>
+<div class="stat"><strong id="resFA">0%</strong><span>False Alarm Rate</span></div>
+<div class="stat"><strong id="resCR">0%</strong><span>Correct Rejection Rate</span></div>
+<div class="stat"><strong id="resRT">—</strong><span>Hit 平均 RT</span></div>
+<div class="stat"><strong id="resCount">20</strong><span>正式題數</span></div>
+</div>
+<p id="summary" style="line-height:1.7"></p>
+<div class="actions">
+<button id="csvBtn" class="primary">下載正式研究 CSV</button>
+<button id="nextStudentBtn">下一位學生</button>
+</div>
+<p class="footerNote">CSV 為逐題資料，可用於後續統計分析。練習題不匯入正式研究 CSV。</p>
+</section>
+</main>
+
+<script>
+(() => {
+const $=s=>document.querySelector(s);
+const E={
+setup:$("#setup"),practiceIntro:$("#practiceIntro"),between:$("#between"),game:$("#game"),results:$("#results"),
+student:$("#student"),week:$("#week"),tester:$("#tester"),practiceBtn:$("#practiceBtn"),practiceStartBtn:$("#practiceStartBtn"),
+formalStartBtn:$("#formalStartBtn"),resetBtn:$("#resetBtn"),tapBtn:$("#tapBtn"),csvBtn:$("#csvBtn"),nextStudentBtn:$("#nextStudentBtn"),
+phaseText:$("#phaseText"),progress:$("#progress"),correct:$("#correct"),falseAlarm:$("#falseAlarm"),avgRt:$("#avgRt"),
+phaseBadge:$("#phaseBadge"),situation:$("#situation"),response:$("#response"),feedback:$("#feedback"),
+practiceSummary:$("#practiceSummary"),resAcc:$("#resAcc"),resHit:$("#resHit"),resFA:$("#resFA"),resCR:$("#resCR"),resRT:$("#resRT"),resCount:$("#resCount"),summary:$("#summary")
+};
+
+const formalItems=[
+["同學走路不小心撞到你","你走路看一下啦！",1],["同學走路不小心撞到你","幹！你白痴喔！",0],
+["同學突然從後面嚇你","靠！嚇死我了！",0],["同學突然從後面嚇你","嚇死我了啦！",1],
+["同學沒有先問就拿你的文具","先問我再拿，好嗎？",1],["同學沒有先問就拿你的文具","你有病喔！",0],
+["打球時同學失誤","沒事，下一球！",1],["打球時同學失誤","X！這也接不到！",0],
+["同學開你的玩笑，你不喜歡","我不喜歡這樣，別再講了。",1],["同學開你的玩笑，你不喜歡","三小啦！",0],
+["遊戲輸掉了","可惡！差一點！",1],["遊戲輸掉了","X你X！",0],
+["同學插隊","欸，要排隊喔！",1],["同學插隊","滾啦！白痴喔！",0],
+["同學一直碰你的身體","不要碰我，我不喜歡。",1],["同學一直碰你的身體","直接推對方並罵髒話",0],
+["老師突然叫你回答問題","等一下，我想一下。",1],["老師突然叫你回答問題","小聲罵一句髒話",0],
+["同學不同意你的意見","我跟你想的不一樣。",1],["同學不同意你的意見","你到底懂不懂啦，白痴！",0]
+].map((x,i)=>({id:"F"+String(i+1).padStart(2,"0"),situation:x[0],response:x[1],go:!!x[2]}));
+
+const practiceItems=[
+["同學借你的橡皮擦後忘記還","可以把橡皮擦還我嗎？",1],
+["同學借你的橡皮擦後忘記還","白痴喔！還來啦！",0],
+["同學不小心踩到你的鞋子","沒關係，下次注意一下。",1],
+["同學不小心踩到你的鞋子","直接推他一下再罵人",0]
+].map((x,i)=>({id:"P"+String(i+1).padStart(2,"0"),situation:x[0],response:x[1],go:!!x[2]}));
+
+const CONTEXT_MS=1300, RESPONSE_MS=3000, FEEDBACK_MS=700;
+let mode="practice",deck=[],idx=0,logs=[],formalLogs=[],stats={},cfg={},ct=null,rtimer=null,shownAt=0,can=false,active=false;
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function clearTimers(){clearTimeout(ct);clearTimeout(rtimer)}
+function blankStats(){return {hit:0,miss:0,fa:0,cr:0,hitRts:[]}}
+function avg(a){return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null}
+function showOnly(node){[E.setup,E.practiceIntro,E.between,E.game,E.results].forEach(x=>x.classList.add("hidden"));node.classList.remove("hidden")}
+function validate(){
+ const s=E.student.value.trim();
+ if(!s){alert("請先輸入學生研究代碼。");E.student.focus();return false}
+ cfg={student:s.slice(0,20),week:Math.max(1,Math.min(20,Number(E.week.value)||1)),tester:(E.tester.value.trim()||"T01").slice(0,20)};
+ return true;
+}
+function updateHud(){
+ E.phaseText.textContent=mode==="practice"?"練習":"正式";
+ E.phaseBadge.textContent=mode==="practice"?"練習題":"正式測驗";
+ E.progress.textContent=Math.min(idx+1,deck.length)+"/"+deck.length;
+ E.correct.textContent=stats.hit+stats.cr; E.falseAlarm.textContent=stats.fa;
+ const a=avg(stats.hitRts);E.avgRt.textContent=a===null?"—":a+" ms";
+}
+function begin(which){
+ mode=which;idx=0;logs=[];stats=blankStats();deck=shuffle(which==="practice"?practiceItems:formalItems);active=true;can=false;showOnly(E.game);next();
+}
+function next(){
+ if(idx>=deck.length){endPhase();return}
+ can=false;E.tapBtn.disabled=true;E.feedback.textContent="";E.response.textContent="";
+ E.situation.textContent=deck[idx].situation;updateHud();
+ ct=setTimeout(showResponse,CONTEXT_MS);
+}
+function showResponse(){
+ if(!active)return;
+ E.response.textContent=deck[idx].response;E.tapBtn.disabled=false;can=true;shownAt=performance.now();
+ rtimer=setTimeout(()=>closeTrial(false,null),RESPONSE_MS);
+}
+function tap(){
+ if(!active||!can)return;
+ can=false;E.tapBtn.disabled=true;clearTimeout(rtimer);
+ closeTrial(true,Math.round(performance.now()-shownAt));
+}
+function closeTrial(did,rt){
+ if(!active)return;
+ can=false;E.tapBtn.disabled=true;
+ const q=deck[idx];let outcome="";
+ if(q.go&&did){outcome="Hit";stats.hit++;stats.hitRts.push(rt)}
+ else if(q.go&&!did){outcome="Miss";stats.miss++}
+ else if(!q.go&&did){outcome="False Alarm";stats.fa++}
+ else{outcome="Correct Rejection";stats.cr++}
+ const row={student_code:cfg.student,week:cfg.week,tester_code:cfg.tester,mode,item_id:q.id,trial_order:idx+1,situation:q.situation,response_text:q.response,trial_type:q.go?"Go":"No-Go",responded:did?1:0,rt_ms:rt??"",outcome,context_ms:CONTEXT_MS,response_window_ms:RESPONSE_MS,timestamp:new Date().toISOString()};
+ logs.push(row);
+ const good=outcome==="Hit"||outcome==="Correct Rejection";
+ E.feedback.textContent=outcome==="Hit"?"✓ 拍對了！":outcome==="Correct Rejection"?"✓ 忍住了！":outcome==="Miss"?"✕ 這題應該拍":"✕ 誤拍！這題要忍住";
+ E.feedback.style.color=good?"var(--good)":"var(--bad)";
+ idx++;updateHud();rtimer=setTimeout(next,FEEDBACK_MS);
+}
+function endPhase(){
+ active=false;clearTimers();
+ if(mode==="practice"){
+   const n=practiceItems.length,correct=stats.hit+stats.cr;
+   E.practiceSummary.textContent=`練習答對 ${correct} / ${n} 題。練習結果不列入正式研究資料。`;
+   showOnly(E.between);
+ }else{
+   formalLogs=[...logs];
+   renderResults();showOnly(E.results);
+ }
+}
+function renderResults(){
+ const hitN=stats.hit+stats.miss,noN=stats.fa+stats.cr,total=hitN+noN;
+ const acc=total?(stats.hit+stats.cr)/total*100:0,hit=hitN?stats.hit/hitN*100:0,fa=noN?stats.fa/noN*100:0,cr=noN?stats.cr/noN*100:0,a=avg(stats.hitRts);
+ E.resAcc.textContent=acc.toFixed(1)+"%";E.resHit.textContent=hit.toFixed(1)+"%";E.resFA.textContent=fa.toFixed(1)+"%";E.resCR.textContent=cr.toFixed(1)+"%";E.resRT.textContent=a===null?"—":a+" ms";E.resCount.textContent=String(total);
+ E.summary.textContent=`研究代碼 ${cfg.student}｜第 ${cfg.week} 週｜Hit ${stats.hit}｜Miss ${stats.miss}｜False Alarm ${stats.fa}｜Correct Rejection ${stats.cr}`;
+}
+function downloadCSV(){
+ if(!formalLogs.length)return;
+ const cols=["student_code","week","tester_code","mode","item_id","trial_order","situation","response_text","trial_type","responded","rt_ms","outcome","context_ms","response_window_ms","timestamp"];
+ const esc=v=>'"'+String(v).replaceAll('"','""')+'"';
+ const csv="\uFEFF"+cols.join(",")+"\n"+formalLogs.map(r=>cols.map(k=>esc(r[k])).join(",")).join("\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=`gonogo_${cfg.student}_week${cfg.week}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function resetHome(){clearTimers();active=false;can=false;formalLogs=[];showOnly(E.setup)}
+function nextStudent(){clearTimers();active=false;can=false;formalLogs=[];E.student.value="";showOnly(E.setup);E.student.focus()}
+E.practiceBtn.addEventListener("click",()=>{if(validate())showOnly(E.practiceIntro)});
+E.practiceStartBtn.addEventListener("click",()=>begin("practice"));
+E.formalStartBtn.addEventListener("click",()=>begin("formal"));
+E.tapBtn.addEventListener("click",tap);
+E.csvBtn.addEventListener("click",downloadCSV);
+E.resetBtn.addEventListener("click",resetHome);
+E.nextStudentBtn.addEventListener("click",nextStudent);
+})();
+</script>
+</body>
+</html>
